@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component } from "react";
 import {
   AppRegistry,
   Text,
@@ -6,14 +6,14 @@ import {
   Button,
   TextInput,
   TouchableHighlight
-} from 'react-native';
+} from "react-native";
 
 const wordData = require("../../data/word");
 const exampleData = require("../../data/example");
 
 import {ListView} from "realm/react-native";
 import realm from "../../data/realm";
-import Icon from 'react-native-vector-icons/FontAwesome';
+import Icon from "react-native-vector-icons/FontAwesome";
 import Styles from "../../asset/style/custom";
 import Loading from "./loading";
 import Header from "../shared/header";
@@ -28,35 +28,37 @@ export default class HomeScreen extends Component {
     super(props);
 
     const ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
+    const wordObjects = realm.objects("Word");
     this.state = {
       dataSource: ds.cloneWithRows([]),
-      wordObjects: realm.objects("Word"),
-      result: realm.objects("Word").length
+      schemaExistLength: wordObjects.length,
+      resultCount: wordObjects.length
     };
   }
 
   setData() {
+    const wordObjects = realm.objects("Word");
     this.setState({
-      dataSource: this.state.dataSource.cloneWithRows(realm.objects("Word")),
-      wordObjects: realm.objects("Word"),
-      result: realm.objects("Word").length
+      dataSource: this.state.dataSource.cloneWithRows(wordObjects),
+      schemaExistLength: wordObjects.length,
+      resultCount: wordObjects.length
     });
   }
 
   componentDidMount() {
     let self = this;
-    if(this.state.wordObjects.length <= 0) {
+    if(this.state.schemaExistLength <= 0) {
       let promise = new Promise((resolve, reject) => {
         setTimeout(function() {
           realm.write(() => {
             for(let [key, value] of Object.entries(wordData)) {
-              realm.create('Word', {id: value.id, name: value.name,
+              realm.create("Word", {id: value.id, name: value.name,
                 raw_name: value.raw_name, meaning: value.meaning,
                 word_type: value.word_type});
             }
 
             for(let [key, value] of Object.entries(exampleData)) {
-              realm.create('Example', {id: value.id, vn_example: value.vn_example,
+              realm.create("Example", {id: value.id, vn_example: value.vn_example,
                 kh_example: value.kh_example, word_id: value.word_id});
             }
           });
@@ -90,39 +92,40 @@ export default class HomeScreen extends Component {
   }
 
   searchText(text) {
-    let result = this.state.wordObjects.filtered(`name BEGINSWITH[c] "${text.toLowerCase()}" OR raw_name BEGINSWITH[c] "${text.toLowerCase()}"`);
+    let result = realm.objects("Word").filtered("name BEGINSWITH[c] $0 OR raw_name BEGINSWITH[c] $1", text, text);
     this.setState({
       dataSource: this.state.dataSource.cloneWithRows(result),
-      result: result.length
+      resultCount: result.length
     });
   }
 
   renderResultList() {
-    if(this.state.result <= 0) {
+    if(this.state.resultCount) {
+      return(
+        <ListView dataSource={this.state.dataSource}
+          renderRow={(data) => this.renderRow(data)}
+          enableEmptySections={true}
+          pageSize={2}
+          style={Styles.list} />
+      )
+    } else {
       return(
         <View style={Styles.middleText}>
           <Text>No result found</Text>
         </View>
       )
-    } else {
-      return(
-        <ListView dataSource={this.state.dataSource}
-          renderRow={(data) => this.renderRow(data)}
-          enableEmptySections={true}
-          style={Styles.list} />
-      )
     }
   }
 
   renderUi() {
-    if(this.state.wordObjects.length <= 0) {
+    if(this.state.schemaExistLength <= 0) {
       return(<Loading />)
     } else {
       return(
         <View style={Styles.container}>
           <TextInput style={Styles.textInput}
             placeholder="ស្វែងរកពាក្យ ..."
-            onChangeText={(text) => this.searchText(text)}
+            onChangeText={(text) => this.searchText(text.trim().toLowerCase())}
           />
           {this.renderResultList()}
         </View>
