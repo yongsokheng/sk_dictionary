@@ -1,8 +1,8 @@
-import React, { Component } from 'react';
+import React, { Component } from "react";
 import {
   View,
   Text
-} from 'react-native';
+} from "react-native";
 
 import {ListView} from "realm/react-native";
 import styles from "../../asset/style/custom";
@@ -26,8 +26,8 @@ export default class Meaning extends Component {
 
   componentDidMount() {
     const {params} = this.props.navigation.state;
-    let wordResult = realm.objects("Word").filtered(`id = ${params.id}`)[0];
-    let exampleResult = realm.objects("Example").filtered(`word_id = ${params.id}`);
+    let wordResult = realm.objects("Word").filtered("id = $0", params.id)[0];
+    let exampleResult = realm.objects("Example").filtered("word_id = $0", params.id);
     this.setState({
       word: wordResult.name,
       meaning: wordResult.meaning,

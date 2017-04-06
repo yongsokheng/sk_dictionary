@@ -1,8 +1,9 @@
-import React, { Component } from 'react';
+import React, { Component } from "react";
 import {
   View,
   ActivityIndicator,
-} from 'react-native';
+} from "react-native";
+
 import Styles from "../../asset/style/custom";
 
 export default class Loading extends Component {
