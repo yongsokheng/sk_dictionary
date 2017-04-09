@@ -23,5 +23,6 @@ const ExampleSchema = {
   }
 };
 
-const realm = new Realm({schema: [WordSchema, ExampleSchema]});
+var key = new Int8Array(64);
+const realm = new Realm({schema: [WordSchema, ExampleSchema], encryptionKey: key});
 export default realm;

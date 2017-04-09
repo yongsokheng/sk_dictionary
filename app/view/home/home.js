@@ -47,6 +47,7 @@ export default class HomeScreen extends Component {
 
   componentDidMount() {
     let self = this;
+    console.log(Realm.defaultPath);
     if(this.state.schemaExistLength <= 0) {
       let promise = new Promise((resolve, reject) => {
         setTimeout(function() {
