@@ -6,7 +6,6 @@ import {
 
 import {ListView} from "realm/react-native";
 import styles from "../../asset/style/custom";
-import realm from "../../data/realm";
 
 export default class Meaning extends Component {
   static navigationOptions = {
@@ -25,6 +24,8 @@ export default class Meaning extends Component {
   }
 
   componentDidMount() {
+    const key = new Int8Array(64);
+    const realm = new Realm({path: "vk.realm", encryptionKey: key});
     const {params} = this.props.navigation.state;
     let wordResult = realm.objects("Word").filtered("id = $0", params.id)[0];
     let exampleResult = realm.objects("Example").filtered("word_id = $0", params.id);
