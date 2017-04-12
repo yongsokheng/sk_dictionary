@@ -8,15 +8,13 @@ import {
   TouchableHighlight
 } from "react-native";
 
-const wordData = require("../../data/word");
-const exampleData = require("../../data/example");
 
 import {ListView} from "realm/react-native";
-import realm from "../../data/realm";
 import Icon from "react-native-vector-icons/FontAwesome";
 import Styles from "../../asset/style/custom";
 import Loading from "./loading";
 import Header from "../shared/header";
+import realm from "../shared/realm";
 
 export default class HomeScreen extends Component {
   static navigationOptions = {
@@ -28,46 +26,37 @@ export default class HomeScreen extends Component {
     super(props);
 
     const ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
-    const wordObjects = realm.objects("Word");
     this.state = {
       dataSource: ds.cloneWithRows([]),
-      schemaExistLength: wordObjects.length,
-      resultCount: wordObjects.length
+      realmVersion: realm.objects("Version").length,
+      resultCount: 1, // 1 represent for result > 0
+      vkData: ""
     };
   }
 
   setData() {
-    const wordObjects = realm.objects("Word");
+    const key = new Int8Array(64);
+    let vkData = new Realm({path: "vk.realm", encryptionKey: key}).objects("Word");
     this.setState({
-      dataSource: this.state.dataSource.cloneWithRows(wordObjects),
-      schemaExistLength: wordObjects.length,
-      resultCount: wordObjects.length
+      dataSource: this.state.dataSource.cloneWithRows(vkData),
+      realmVersion: realm.objects("Version").length,
+      resultCount: 1,
+      vkData: vkData
     });
   }
 
   componentDidMount() {
     let self = this;
-    if(this.state.schemaExistLength <= 0) {
+    if(this.state.realmVersion <= 0) {
       let promise = new Promise((resolve, reject) => {
         setTimeout(function() {
-          realm.write(() => {
-            for(let [key, value] of Object.entries(wordData)) {
-              realm.create("Word", {id: value.id, name: value.name,
-                raw_name: value.raw_name, meaning: value.meaning,
-                word_type: value.word_type});
-            }
+          Realm.copyBundledRealmFiles();
 
-            for(let [key, value] of Object.entries(exampleData)) {
-              realm.create("Example", {id: value.id, vn_example: value.vn_example,
-                kh_example: value.kh_example, word_id: value.word_id});
-            }
+          realm.write(() => {
+            realm.create("Version", {id: 1});
           });
 
-          if(realm.objects("Word").length == 25709 && realm.objects("Example").length == 11790) {
-            resolve("Success!");
-          } else {
-            reject("something went wrong");
-          }
+          resolve("success");
         }, 250);
       });
 
@@ -76,7 +65,6 @@ export default class HomeScreen extends Component {
       }, function(err) {
         console.log(err);
       });
-
     } else {
       this.setData();
     }
@@ -92,7 +80,10 @@ export default class HomeScreen extends Component {
   }
 
   searchText(text) {
-    let result = realm.objects("Word").filtered("name BEGINSWITH[c] $0 OR raw_name BEGINSWITH[c] $1", text, text);
+    let result = this.state.vkData.filtered("name BEGINSWITH[c] $0 OR raw_name BEGINSWITH[c] $1", text, text);
+    if((list = this.refs.list)) {
+      list.scrollTo({y: 0, animated: false});
+    }
     this.setState({
       dataSource: this.state.dataSource.cloneWithRows(result),
       resultCount: result.length
@@ -106,6 +97,7 @@ export default class HomeScreen extends Component {
           renderRow={(data) => this.renderRow(data)}
           enableEmptySections={true}
           pageSize={2}
+          ref="list"
           style={Styles.list} />
       )
     } else {
@@ -118,7 +110,7 @@ export default class HomeScreen extends Component {
   }
 
   renderUi() {
-    if(this.state.schemaExistLength <= 0) {
+    if(this.state.realmVersion <= 0) {
       return(<Loading />)
     } else {
       return(
