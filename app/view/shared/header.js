@@ -2,6 +2,6 @@ export default Header = {
   tintColor: "#FFFFFF",
   backTitle: null,
   style: {
-    backgroundColor: "#017fad"
+    backgroundColor: "#3b5998"
   }
 };

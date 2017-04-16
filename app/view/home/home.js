@@ -5,20 +5,22 @@ import {
   View,
   Button,
   TextInput,
-  TouchableHighlight
+  TouchableHighlight,
+  StatusBar
 } from "react-native";
-
 
 import {ListView} from "realm/react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import Styles from "../../asset/style/custom";
+import NativeStyles from "../../asset/style/styles";
 import Loading from "./loading";
 import Header from "../shared/header";
 import realm from "../shared/realm";
+import {capitalize} from "../shared/custom";
 
 export default class HomeScreen extends Component {
   static navigationOptions = {
-    title: "VK Dictionary",
+    title: "វចនានុក្រម VK",
     header: Header
   };
 
@@ -29,18 +31,16 @@ export default class HomeScreen extends Component {
     this.state = {
       dataSource: ds.cloneWithRows([]),
       realmVersion: realm.objects("Version").length,
-      resultCount: 1, // 1 represent for result > 0
       vkData: ""
     };
   }
 
   setData() {
     const key = new Int8Array(64);
-    let vkData = new Realm({path: "vk.realm", encryptionKey: key}).objects("Word");
+    let vkData = new Realm({path: "vk.realm", encryptionKey: key}).objects("Word").sorted("name");
     this.setState({
       dataSource: this.state.dataSource.cloneWithRows(vkData),
       realmVersion: realm.objects("Version").length,
-      resultCount: 1,
       vkData: vkData
     });
   }
@@ -70,40 +70,59 @@ export default class HomeScreen extends Component {
     }
   }
 
+  renderTechnicalLabel(wordType) {
+    if(wordType === "technical") {
+      return(
+        <Text style={Styles.smallText}>  (ពាក្យបច្ចេកទេស)</Text>
+      )
+    } else {
+      return(null)
+    }
+  }
+
+  rowClick(data) {
+    this.props.navigation.navigate("Meaning", {id: data.id, name: data.name});
+  }
+
   renderRow(data) {
     return(
       <TouchableHighlight
-        onPress={() => this.props.navigation.navigate("Meaning", {id: data.id, name: data.name})}>
-        <Text>{data.name}</Text>
+        onPress={() => this.rowClick(data)}
+        underlayColor = {"#dddddd"} >
+        <View style={Styles.rowContainer}>
+          <Text style={[Styles.bigText, {color: "#000000"}]}>{capitalize(data.name)}</Text>
+          {this.renderTechnicalLabel(data.word_type)}
+        </View>
       </TouchableHighlight>
     )
   }
 
   searchText(text) {
-    let result = this.state.vkData.filtered("name BEGINSWITH[c] $0 OR raw_name BEGINSWITH[c] $1", text, text);
+    let result = this.state.vkData.filtered("name BEGINSWITH[c] $0 OR raw_name BEGINSWITH[c] $1", text, text).sorted("name");
     if((list = this.refs.list)) {
       list.scrollTo({y: 0, animated: false});
     }
     this.setState({
-      dataSource: this.state.dataSource.cloneWithRows(result),
-      resultCount: result.length
+      dataSource: this.state.dataSource.cloneWithRows(result)
     });
   }
 
   renderResultList() {
-    if(this.state.resultCount) {
+    if(this.state.dataSource.getRowCount() > 0) {
       return(
         <ListView dataSource={this.state.dataSource}
           renderRow={(data) => this.renderRow(data)}
           enableEmptySections={true}
           pageSize={2}
+          renderSeparator={(sectionId, rowId) => <View key={rowId} style={Styles.separator} />}
+          keyboardShouldPersistTaps={"always"}
           ref="list"
           style={Styles.list} />
       )
     } else {
       return(
         <View style={Styles.middleText}>
-          <Text>No result found</Text>
+          <Text style={[Styles.bigText, {color: "#000000"}]}>គ្មានទិន្នន័យ</Text>
         </View>
       )
     }
@@ -115,7 +134,7 @@ export default class HomeScreen extends Component {
     } else {
       return(
         <View style={Styles.container}>
-          <TextInput style={Styles.textInput}
+          <TextInput style={[NativeStyles.textInput, Styles.bigText]}
             placeholder="ស្វែងរកពាក្យ ..."
             onChangeText={(text) => this.searchText(text.trim().toLowerCase())}
           />
@@ -127,7 +146,10 @@ export default class HomeScreen extends Component {
 
   render() {
     return (
-      <View style={Styles.container}>{this.renderUi()}</View>
+      <View style={Styles.container}>
+        <StatusBar barStyle="light-content" />
+        {this.renderUi()}
+      </View>
     );
   }
 }
