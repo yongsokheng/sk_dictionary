@@ -6,7 +6,8 @@ import {
   Button,
   TextInput,
   TouchableHighlight,
-  StatusBar
+  StatusBar,
+  Keyboard
 } from "react-native";
 
 import {ListView} from "realm/react-native";
@@ -32,7 +33,8 @@ export default class HomeScreen extends Component {
     this.state = {
       dataSource: ds.cloneWithRows([]),
       realmVersion: realm.objects("Version").length,
-      vkData: ""
+      vkData: "",
+      error: false
     };
   }
 
@@ -51,13 +53,18 @@ export default class HomeScreen extends Component {
     if(this.state.realmVersion <= 0) {
       let promise = new Promise((resolve, reject) => {
         setTimeout(function() {
-          Realm.copyBundledRealmFiles();
+          try {
+            Realm.copyBundledRealmFiles();
+            realm.write(() => {
+              realm.create("Version", {id: 1});
+            });
 
-          realm.write(() => {
-            realm.create("Version", {id: 1});
-          });
-
-          resolve("success");
+            resolve("success");
+          } catch(e) {
+            self.setState({
+              error: true
+            })
+          }
         }, 250);
       });
 
@@ -83,6 +90,7 @@ export default class HomeScreen extends Component {
   }
 
   rowClick(data) {
+    Keyboard.dismiss();
     this.props.navigation.navigate("Meaning", {id: data.id, name: data.name});
   }
 
@@ -131,7 +139,13 @@ export default class HomeScreen extends Component {
   }
 
   renderUi() {
-    if(this.state.realmVersion <= 0) {
+    if(this.state.error) {
+      return(
+        <View style={[Styles.middleText, {padding: 20}]}>
+          <Text style={[Styles.bigText, {color: "#000000"}]}>មិនអាចបញ្ចូលទិន្នន័យបាន។​​ សូមពិនិត្យមើល Storage របស់ទូរស័ព្ទ​​​ ហើយព្យាយាមម្តងទៀត។</Text>
+        </View>
+      )
+    } else if(this.state.realmVersion <= 0) {
       return(<Loading />)
     } else {
       return(

@@ -12,10 +12,6 @@ export default Styles = StyleSheet.create({
     paddingLeft: 20,
     paddingTop: 10
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center"
-  },
   bigText: {
     fontSize: 17
   },
