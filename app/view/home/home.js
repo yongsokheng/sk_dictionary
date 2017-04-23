@@ -17,6 +17,7 @@ import Loading from "./loading";
 import Header from "../shared/header";
 import realm from "../shared/realm";
 import {capitalize} from "../shared/custom";
+import SplashScreen from "react-native-splash-screen";
 
 export default class HomeScreen extends Component {
   static navigationOptions = {
@@ -68,6 +69,7 @@ export default class HomeScreen extends Component {
     } else {
       this.setData();
     }
+    SplashScreen.hide();
   }
 
   renderTechnicalLabel(wordType) {
