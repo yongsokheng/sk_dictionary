@@ -1,8 +1,8 @@
 import React, { Component } from "react";
 import {
   View,
-  Text,
-  Keyboard
+  ScrollView,
+  Text
 } from "react-native";
 
 import {ListView} from "realm/react-native";
@@ -25,7 +25,6 @@ export default class Meaning extends Component {
   }
 
   componentDidMount() {
-    Keyboard.dismiss();
     const key = new Int8Array(64);
     const realm = new Realm({path: "vk.realm", encryptionKey: key});
     const {params} = this.props.navigation.state;
@@ -70,7 +69,7 @@ export default class Meaning extends Component {
 
   render() {
     return(
-      <View style={Styles.containerMeaning}>
+      <ScrollView style={Styles.containerMeaning}>
         {this.renderTechnicalLabel(this.state.wordObject.word_type)}
         <Text style={[Styles.bigText, Styles.meaningText]}>{this.state.wordObject.meaning}</Text>
         {this.renderExampleLabel()}
@@ -79,7 +78,7 @@ export default class Meaning extends Component {
           renderRow={(data, sectionID, rowID) => this.renderRow(data, sectionID, rowID)}
           enableEmptySections={true}
         />
-      </View>
+      </ScrollView>
     )
   }
 }
